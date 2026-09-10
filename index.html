@@ -286,15 +286,11 @@
   <script>
     // Sample test dataset
     const DEFAULT_SAMPLE_DATA = [
-      { SL: "1", TID: "100701", MID: "M999", "MERCHANT NAME": "Uttara Mart", ADDRESS: "Sector 3, Uttara, Dhaka", DISTRICT: "Dhaka", ZONE: "UTTARA", "OPERATOR NAME": "City Bank" },
-      { SL: "2", TID: "100702", MID: "M1000", "MERCHANT NAME": "Mirpur Store", ADDRESS: "Mirpur 10, Dhaka", DISTRICT: "Dhaka", ZONE: "MIRPUR", "OPERATOR NAME": "EBL" },
-      { SL: "3", TID: "100703", MID: "M1001", "MERCHANT NAME": "Gulshan Plaza", ADDRESS: "Gulshan-2, Dhaka", DISTRICT: "Dhaka", ZONE: "GULSHAN", "OPERATOR NAME": "BRAC Bank" },
-      { SL: "4", TID: "100704", MID: "M1002", "MERCHANT NAME": "Dhanmondi Shop", ADDRESS: "Dhanmondi 27, Dhaka", DISTRICT: "Dhaka", ZONE: "DHANMONDI", "OPERATOR NAME": "DBBL" },
-      { SL: "5", TID: "100705", MID: "M1003", "MERCHANT NAME": "Jinzira Trader", ADDRESS: "Jinzira, Keraniganj", DISTRICT: "Dhaka", ZONE: "JINZIRA", "OPERATOR NAME": "City Bank" }
-    ];
-
-    const EXPORT_STANDARD_COLUMNS = [
-      "SL.", "TID", "MID", "MERCHANT NAME", "DBA NAME", "ADDRESS", "BANK CONT. PERSON NAME", "BANK CONT. PERSON NUMBER", "DISTRICT", "DIVISION", "ZONE", "OPERATOR NAME", "EMI", "TENURE"
+      { SL: "1", TID: "100701", MID: "M999", "MERCHANT NAME": "Uttara Mart", ADDRESS: "Sector 3, Uttara, Dhaka", DISTRICT: "Dhaka", ZONE: "UTTARA", "OPERATOR NAME": "City Bank", "CUSTOM NOTE": "Urgent terminal check" },
+      { SL: "2", TID: "100702", MID: "M1000", "MERCHANT NAME": "Mirpur Store", ADDRESS: "Mirpur 10, Dhaka", DISTRICT: "Dhaka", ZONE: "MIRPUR", "OPERATOR NAME": "EBL", "CUSTOM NOTE": "Battery replacement" },
+      { SL: "3", TID: "100703", MID: "M1001", "MERCHANT NAME": "Gulshan Plaza", ADDRESS: "Gulshan-2, Dhaka", DISTRICT: "Dhaka", ZONE: "GULSHAN", "OPERATOR NAME": "BRAC Bank", "CUSTOM NOTE": "New deployment" },
+      { SL: "4", TID: "100704", MID: "M1002", "MERCHANT NAME": "Dhanmondi Shop", ADDRESS: "Dhanmondi 27, Dhaka", DISTRICT: "Dhaka", ZONE: "DHANMONDI", "OPERATOR NAME": "DBBL", "CUSTOM NOTE": "Paper roll required" },
+      { SL: "5", TID: "100705", MID: "M1003", "MERCHANT NAME": "Jinzira Trader", ADDRESS: "Jinzira, Keraniganj", DISTRICT: "Dhaka", ZONE: "JINZIRA", "OPERATOR NAME": "City Bank", "CUSTOM NOTE": "Network issue" }
     ];
 
     // Configured Engineers with separated Osman & Rohan, plus exact new mapping rules
@@ -534,18 +530,8 @@
 
     function findBestMatchingEngineer(item) {
       const rawAddr = sanitizeAddressForMatching(item[addressCol]);
-      const rawZone = sanitizeAddressForMatching(item.ZONE || item.Zone || item.zone || "");
-      const cleanZone = rawZone.trim().toLowerCase();
-      const genericZones = ["dhaka", "bangladesh", "n/a", "na", ""];
-
-      if (cleanZone && !genericZones.includes(cleanZone)) {
-        for (const eng of engineers) {
-          for (const area of eng.areas) {
-            if (area && cleanZone.includes(area.toLowerCase())) return { eng, matchedKeyword: `ZONE: ${area}` };
-          }
-        }
-      }
-
+      
+      // Strict rule: Only match Address / Area Column (ignoring Zone column completely)
       for (const eng of engineers) {
         for (const area of eng.areas) {
           if (area && rawAddr.includes(area.toLowerCase())) return { eng, matchedKeyword: `ADDR: ${area}` };
@@ -727,29 +713,22 @@
       let fileCount = 0;
 
       for (const eng of engineers) {
-        const rows = rawData.filter(i => {
+        const matchedRawItems = rawData.filter(i => {
           const res = findBestMatchingEngineer(i);
           return res.eng && res.eng.id === eng.id;
-        }).map((item, idx) => ({
-          "SL.": idx + 1,
-          "TID": item["TID"] || "",
-          "MID": item["MID"] || "",
-          "MERCHANT NAME": item[nameCol] || "",
-          "DBA NAME": item["DBA NAME"] || "",
-          "ADDRESS": item[addressCol] || "",
-          "BANK CONT. PERSON NAME": item["BANK CONT. PERSON NAME"] || "",
-          "BANK CONT. PERSON NUMBER": item["BANK CONT. PERSON NUMBER"] || "",
-          "DISTRICT": item["DISTRICT"] || "Dhaka",
-          "DIVISION": item["DIVISION"] || "Dhaka",
-          "ZONE": item["ZONE"] || "",
-          "OPERATOR NAME": item["OPERATOR NAME"] || "",
-          "EMI": item["EMI"] || "",
-          "TENURE": item["TENURE"] || ""
-        }));
+        });
 
-        if (rows.length > 0) {
+        if (matchedRawItems.length > 0) {
+          // Keep all original upload columns intact, adding SL at the beginning or maintaining exact structure
+          const rows = matchedRawItems.map((item, idx) => {
+            const copy = { ...item };
+            // Ensure SL is updated if present or insert SL
+            copy["SL."] = idx + 1;
+            return copy;
+          });
+
           const wb = XLSX.utils.book_new();
-          const sheet = XLSX.utils.json_to_sheet(rows, { header: EXPORT_STANDARD_COLUMNS });
+          const sheet = XLSX.utils.json_to_sheet(rows);
           XLSX.utils.book_append_sheet(wb, sheet, "Assigned Tasks");
           
           const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
@@ -759,29 +738,20 @@
         }
       }
 
-      const unassignedRows = rawData.filter(i => {
+      const unassignedRawItems = rawData.filter(i => {
         const res = findBestMatchingEngineer(i);
         return !res.eng;
-      }).map((item, idx) => ({
-        "SL.": idx + 1,
-        "TID": item["TID"] || "",
-        "MID": item["MID"] || "",
-        "MERCHANT NAME": item[nameCol] || "",
-        "DBA NAME": item["DBA NAME"] || "",
-        "ADDRESS": item[addressCol] || "",
-        "BANK CONT. PERSON NAME": item["BANK CONT. PERSON NAME"] || "",
-        "BANK CONT. PERSON NUMBER": item["BANK CONT. PERSON NUMBER"] || "",
-        "DISTRICT": item["DISTRICT"] || "Dhaka",
-        "DIVISION": item["DIVISION"] || "Dhaka",
-        "ZONE": item["ZONE"] || "",
-        "OPERATOR NAME": item["OPERATOR NAME"] || "",
-        "EMI": item["EMI"] || "",
-        "TENURE": item["TENURE"] || ""
-      }));
+      });
 
-      if (unassignedRows.length > 0) {
+      if (unassignedRawItems.length > 0) {
+        const unassignedRows = unassignedRawItems.map((item, idx) => {
+          const copy = { ...item };
+          copy["SL."] = idx + 1;
+          return copy;
+        });
+
         const wbUnassigned = XLSX.utils.book_new();
-        const unassignedSheet = XLSX.utils.json_to_sheet(unassignedRows, { header: EXPORT_STANDARD_COLUMNS });
+        const unassignedSheet = XLSX.utils.json_to_sheet(unassignedRows);
         XLSX.utils.book_append_sheet(wbUnassigned, unassignedSheet, "Unassigned Review");
         
         const wboutUnassigned = XLSX.write(wbUnassigned, { bookType: 'xlsx', type: 'array' });
