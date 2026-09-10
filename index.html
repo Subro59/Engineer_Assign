@@ -58,7 +58,7 @@
         </div>
         <div>
           <h1 class="text-xl font-bold tracking-tight text-white">9-Engineer Area Task Router</h1>
-          <p class="text-xs text-slate-400">Strict Zone-First Routing Engine & Standardized Excel ZIP Generator</p>
+          <p class="text-xs text-slate-400">Strict Zone-First Routing Engine & Separate Excel ZIP Generator</p>
         </div>
       </div>
       <div class="flex items-center gap-3">
@@ -138,11 +138,16 @@
             <h2 class="text-base font-semibold text-slate-800 flex items-center gap-2">
               <i class="fa-solid fa-users text-emerald-600"></i> Assigned Engineers & Territory Mappings
             </h2>
-            <p class="text-xs text-slate-500">Strict Rule: <b>Zone Column Matched First &rarr; Address Column Matched Second</b>.</p>
+            <p class="text-xs text-slate-500">Strict Rule: <b>Zone Column Matched First (Address column ignored)</b>.</p>
           </div>
-          <button id="addEngineerBtn" class="px-3 py-1.5 text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-all flex items-center gap-1.5 shadow-sm">
-            <i class="fa-solid fa-plus text-[10px]"></i> Add Engineer
-          </button>
+          <div class="flex items-center gap-2">
+            <button id="saveEngineersBtn" class="px-3 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-all flex items-center gap-1.5 shadow-sm">
+              <i class="fa-solid fa-floppy-disk text-[10px]"></i> Save Engineers
+            </button>
+            <button id="addEngineerBtn" class="px-3 py-1.5 text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-all flex items-center gap-1.5 shadow-sm">
+              <i class="fa-solid fa-plus text-[10px]"></i> Add Engineer
+            </button>
+          </div>
         </div>
 
         <!-- Engineers List Container -->
@@ -151,28 +156,6 @@
         </div>
       </div>
 
-    </div>
-
-    <!-- Export Format Banner -->
-    <div class="bg-emerald-950 text-emerald-100 p-4 rounded-xl border border-emerald-800 shadow-inner flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <div class="bg-emerald-500/20 text-emerald-400 p-2 rounded-lg">
-          <i class="fa-solid fa-file-zipper text-xl"></i>
-        </div>
-        <div>
-          <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-300">Separate Excel File ZIP Export</h3>
-          <p class="text-[11px] text-emerald-200/80">Each engineer's routed records export into their own distinct Excel file bundled neatly inside a ZIP archive.</p>
-        </div>
-      </div>
-      <div class="flex flex-wrap gap-1 max-w-2xl">
-        <span class="bg-emerald-900/80 border border-emerald-700/60 text-emerald-200 text-[10px] px-2 py-0.5 rounded font-mono">SL.</span>
-        <span class="bg-emerald-900/80 border border-emerald-700/60 text-emerald-200 text-[10px] px-2 py-0.5 rounded font-mono">TID</span>
-        <span class="bg-emerald-900/80 border border-emerald-700/60 text-emerald-200 text-[10px] px-2 py-0.5 rounded font-mono">MID</span>
-        <span class="bg-emerald-900/80 border border-emerald-700/60 text-emerald-200 text-[10px] px-2 py-0.5 rounded font-mono">MERCHANT NAME</span>
-        <span class="bg-emerald-900/80 border border-emerald-700/60 text-emerald-200 text-[10px] px-2 py-0.5 rounded font-mono">DBA NAME</span>
-        <span class="bg-emerald-900/80 border border-emerald-700/60 text-emerald-200 text-[10px] px-2 py-0.5 rounded font-mono">ADDRESS</span>
-        <span class="bg-emerald-900/80 border border-emerald-700/60 text-emerald-200 text-[10px] px-2 py-0.5 rounded font-mono">ZONE</span>
-      </div>
     </div>
 
     <!-- Middle Tabs: Summary & Sheets Breakdown -->
@@ -238,7 +221,7 @@
   <footer class="bg-slate-900 text-slate-400 text-xs py-4 mt-auto border-t border-slate-800">
     <div class="max-w-7xl mx-auto px-4 text-center flex flex-col sm:flex-row justify-between items-center gap-2">
       <p>© 2026 Area-Wise Task & Engineer Excel Router</p>
-      <p class="text-slate-500">Auto routing tasks across Greater Dhaka & Suburbs.</p>
+      <p class="text-slate-500">Auto routing tasks across Greater Dhaka & Suburbs into Separate Excel files.</p>
     </div>
   </footer>
 
@@ -293,8 +276,8 @@
       { SL: "5", TID: "100705", MID: "M1003", "MERCHANT NAME": "Jinzira Trader", ADDRESS: "Jinzira, Keraniganj", DISTRICT: "Dhaka", ZONE: "JINZIRA", "OPERATOR NAME": "City Bank", "CUSTOM NOTE": "Network issue" }
     ];
 
-    // Configured Engineers with separated Osman & Rohan, plus exact new mapping rules
-    let engineers = [
+    // Configured Engineers with updated mappings including Jinzira, Karaniganj, Badamtoli, Dohar, Adabar, Hatirjheel, Fulbaria, Candrima, Nishatnagar, Purbachal, Manikganj, Shantinagar
+    let DEFAULT_ENGINEERS = [
       {
         id: "eng_1",
         name: "Md. Ariful Islam",
@@ -381,6 +364,28 @@
       }
     ];
 
+    let engineers = loadEngineers();
+
+    function loadEngineers() {
+      try {
+        const saved = localStorage.getItem('routing_engineers_list_v2');
+        if (saved) {
+          return JSON.parse(saved);
+        }
+      } catch (e) {
+        console.error("Could not load saved engineers", e);
+      }
+      return JSON.parse(JSON.stringify(DEFAULT_ENGINEERS));
+    }
+
+    function saveEngineersToStorage() {
+      try {
+        localStorage.setItem('routing_engineers_list_v2', JSON.stringify(engineers));
+      } catch (e) {
+        console.error("Could not save engineers", e);
+      }
+    }
+
     let rawData = [...DEFAULT_SAMPLE_DATA];
     let addressCol = "ADDRESS";
     let nameCol = "MERCHANT NAME";
@@ -393,6 +398,7 @@
     const nameColumnSelect = document.getElementById('nameColumnSelect');
     const engineerList = document.getElementById('engineerList');
     const addEngineerBtn = document.getElementById('addEngineerBtn');
+    const saveEngineersBtn = document.getElementById('saveEngineersBtn');
     const allRecordsTableBody = document.getElementById('allRecordsTableBody');
     const engineerCardsPreview = document.getElementById('engineerCardsPreview');
     const recordCountBadge = document.getElementById('recordCountBadge');
@@ -428,24 +434,58 @@
     });
 
     function setupEventListeners() {
-      excelFileInput.addEventListener('change', handleFileSelect);
-      addressColumnSelect.addEventListener('change', (e) => { addressCol = e.target.value; processAndRenderData(); });
-      nameColumnSelect.addEventListener('change', (e) => { nameCol = e.target.value; processAndRenderData(); });
+      if (excelFileInput) excelFileInput.addEventListener('change', handleFileSelect);
+      if (addressColumnSelect) addressColumnSelect.addEventListener('change', (e) => { addressCol = e.target.value; processAndRenderData(); });
+      if (nameColumnSelect) nameColumnSelect.addEventListener('change', (e) => { nameCol = e.target.value; processAndRenderData(); });
 
-      addEngineerBtn.addEventListener('click', () => {
-        const rand = COLOR_PALETTES[Math.floor(Math.random() * COLOR_PALETTES.length)];
-        engineers.push({ id: 'eng_' + Date.now(), name: 'New Engineer', badgeColor: rand.badge, headerBg: rand.header, areas: ['new area'] });
-        renderEngineerConfigs();
-        processAndRenderData();
-      });
+      if (addEngineerBtn) {
+        addEngineerBtn.addEventListener('click', () => {
+          const rand = COLOR_PALETTES[Math.floor(Math.random() * COLOR_PALETTES.length)];
+          engineers.push({ id: 'eng_' + Date.now(), name: 'New Engineer', badgeColor: rand.badge, headerBg: rand.header, areas: ['new area'] });
+          renderEngineerConfigs();
+          processAndRenderData();
+        });
+      }
 
-      resetSampleBtn.addEventListener('click', () => {
-        rawData = [...DEFAULT_SAMPLE_DATA];
-        addressCol = "ADDRESS";
-        nameCol = "MERCHANT NAME";
-        populateColumnSelects();
-        processAndRenderData();
-      });
+      if (saveEngineersBtn) {
+        saveEngineersBtn.addEventListener('click', () => {
+          document.querySelectorAll('.eng-name-input').forEach(input => {
+            const idx = input.dataset.idx;
+            if (engineers[idx]) engineers[idx].name = input.value;
+          });
+          document.querySelectorAll('.eng-areas-input').forEach(input => {
+            const idx = input.dataset.idx;
+            if (engineers[idx]) {
+              engineers[idx].areas = input.value.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+            }
+          });
+          saveEngineersToStorage();
+          processAndRenderData();
+          
+          const originalText = saveEngineersBtn.innerHTML;
+          saveEngineersBtn.innerHTML = '<i class="fa-solid fa-check text-[10px]"></i> Saved Successfully!';
+          saveEngineersBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-500');
+          saveEngineersBtn.classList.add('bg-emerald-700');
+          setTimeout(() => {
+            saveEngineersBtn.innerHTML = originalText;
+            saveEngineersBtn.classList.remove('bg-emerald-700');
+            saveEngineersBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-500');
+          }, 2000);
+        });
+      }
+
+      if (resetSampleBtn) {
+        resetSampleBtn.addEventListener('click', () => {
+          rawData = [...DEFAULT_SAMPLE_DATA];
+          addressCol = "ADDRESS";
+          nameCol = "MERCHANT NAME";
+          engineers = JSON.parse(JSON.stringify(DEFAULT_ENGINEERS));
+          saveEngineersToStorage();
+          renderEngineerConfigs();
+          populateColumnSelects();
+          processAndRenderData();
+        });
+      }
 
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -456,23 +496,25 @@
           btn.classList.add('border-b-2', 'border-emerald-600', 'text-emerald-700', 'bg-white', 'shadow-sm');
           btn.classList.remove('text-slate-500');
           document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-          document.getElementById(btn.getAttribute('data-target')).classList.remove('hidden');
+          const target = btn.getAttribute('data-target');
+          const targetEl = document.getElementById(target);
+          if (targetEl) targetEl.classList.remove('hidden');
         });
       });
 
-      searchInput.addEventListener('input', (e) => { activeFilterSearch = e.target.value.toLowerCase(); processAndRenderData(); });
-      closeModalBtn.addEventListener('click', () => sheetDetailModal.classList.add('hidden'));
-      closeModalBtn2.addEventListener('click', () => sheetDetailModal.classList.add('hidden'));
-      exportExcelBtn.addEventListener('click', exportMultiSheetWorkbook);
+      if (searchInput) searchInput.addEventListener('input', (e) => { activeFilterSearch = e.target.value.toLowerCase(); processAndRenderData(); });
+      if (closeModalBtn) closeModalBtn.addEventListener('click', () => sheetDetailModal.classList.add('hidden'));
+      if (closeModalBtn2) closeModalBtn2.addEventListener('click', () => sheetDetailModal.classList.add('hidden'));
+      if (exportExcelBtn) exportExcelBtn.addEventListener('click', exportMultiSheetWorkbook);
     }
 
-    function handleFileSelect() {
-      const file = excelFileInput.files[0];
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = function (e) {
+      reader.onload = function (evt) {
         try {
-          const data = new Uint8Array(e.target.result);
+          const data = new Uint8Array(evt.target.result);
           const workbook = XLSX.read(data, { type: 'array' });
           const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
           if (json.length === 0) { alert("Uploaded sheet is empty."); return; }
@@ -485,6 +527,7 @@
     }
 
     function populateColumnSelects() {
+      if (!addressColumnSelect || !nameColumnSelect) return;
       addressColumnSelect.innerHTML = "";
       nameColumnSelect.innerHTML = "";
       if (rawData.length === 0) return;
@@ -504,6 +547,7 @@
     }
 
     function renderEngineerConfigs() {
+      if (!engineerList) return;
       engineerList.innerHTML = "";
       engineers.forEach((eng, idx) => {
         const div = document.createElement('div');
@@ -511,11 +555,11 @@
         div.innerHTML = `
           <div class="flex-1 w-full space-y-1.5">
             <div class="flex items-center gap-2">
-              <input type="text" value="${eng.name}" data-idx="${idx}" class="eng-name-input font-bold text-xs bg-white border border-slate-300 rounded px-2 py-1 text-slate-800 w-full sm:w-1/2" />
+              <input type="text" value="${escapeHtml(eng.name)}" data-idx="${idx}" class="eng-name-input font-bold text-xs bg-white border border-slate-300 rounded px-2 py-1 text-slate-800 w-full sm:w-1/2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
               <span class="text-[10px] px-2 py-0.5 rounded-full font-medium ${eng.badgeColor} border">Assigned Territory</span>
             </div>
             <div>
-              <input type="text" value="${eng.areas.join(', ')}" data-idx="${idx}" class="eng-areas-input text-xs bg-white border border-slate-300 rounded px-2 py-1 text-slate-600 w-full" />
+              <input type="text" value="${escapeHtml(eng.areas.join(', '))}" data-idx="${idx}" class="eng-areas-input text-xs bg-white border border-slate-300 rounded px-2 py-1 text-slate-600 w-full focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
             </div>
           </div>
           <button data-idx="${idx}" class="remove-eng-btn text-slate-400 hover:text-rose-600 p-1.5 text-xs"><i class="fa-solid fa-trash-can"></i></button>
@@ -523,18 +567,27 @@
         engineerList.appendChild(div);
       });
 
-      document.querySelectorAll('.eng-name-input').forEach(i => i.addEventListener('input', e => { engineers[e.target.dataset.idx].name = e.target.value; processAndRenderData(); }));
-      document.querySelectorAll('.eng-areas-input').forEach(i => i.addEventListener('change', e => { engineers[e.target.dataset.idx].areas = e.target.value.split(',').map(s => s.trim().toLowerCase()).filter(Boolean); processAndRenderData(); }));
-      document.querySelectorAll('.remove-eng-btn').forEach(b => b.addEventListener('click', e => { engineers.splice(b.dataset.idx, 1); renderEngineerConfigs(); processAndRenderData(); }));
+      document.querySelectorAll('.eng-name-input').forEach(i => i.addEventListener('input', e => { 
+        engineers[e.target.dataset.idx].name = e.target.value; 
+      }));
+      document.querySelectorAll('.eng-areas-input').forEach(i => i.addEventListener('input', e => { 
+        engineers[e.target.dataset.idx].areas = e.target.value.split(',').map(s => s.trim().toLowerCase()).filter(Boolean); 
+      }));
+      document.querySelectorAll('.remove-eng-btn').forEach(b => b.addEventListener('click', e => { 
+        engineers.splice(b.dataset.idx, 1); 
+        saveEngineersToStorage();
+        renderEngineerConfigs(); 
+        processAndRenderData(); 
+      }));
     }
 
     function findBestMatchingEngineer(item) {
-      const rawAddr = sanitizeAddressForMatching(item[addressCol]);
+      // Strict Zone-First Matching Rule
+      const rawZone = String(item["ZONE"] || item["Zone"] || item["zone"] || "").toLowerCase();
       
-      // Strict rule: Only match Address / Area Column (ignoring Zone column completely)
       for (const eng of engineers) {
         for (const area of eng.areas) {
-          if (area && rawAddr.includes(area.toLowerCase())) return { eng, matchedKeyword: `ADDR: ${area}` };
+          if (area && rawZone.includes(area.toLowerCase())) return { eng, matchedKeyword: `ZONE: ${area}` };
         }
       }
       return { eng: null, matchedKeyword: "" };
@@ -548,10 +601,10 @@
         return { rowNum: index + 1, raw: item, nameVal: item[nameCol] || item["MERCHANT NAME"] || "-", addressVal: item[addressCol] || "-", zoneVal: item.ZONE || item.Zone || "-", assignedEng: eng, matchedAreaKeyword: matchedKeyword };
       });
 
-      recordCountBadge.textContent = `${rawData.length} Records`;
-      totalTabBadge.textContent = rawData.length;
-      matchedStats.textContent = matched;
-      unassignedStats.textContent = unassigned;
+      if (recordCountBadge) recordCountBadge.textContent = `${rawData.length} Records`;
+      if (totalTabBadge) totalTabBadge.textContent = rawData.length;
+      if (matchedStats) matchedStats.textContent = matched;
+      if (unassignedStats) unassignedStats.textContent = unassigned;
 
       const filtered = processed.filter(p => {
         if (!activeFilterSearch) return true;
@@ -563,6 +616,7 @@
     }
 
     function renderAllRecordsTable(data) {
+      if (!allRecordsTableBody) return;
       allRecordsTableBody.innerHTML = "";
       if (data.length === 0) {
         allRecordsTableBody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400">No records found.</td></tr>`;
@@ -584,6 +638,7 @@
     }
 
     function renderEngineerSheetsPreview(processedData) {
+      if (!engineerCardsPreview) return;
       engineerCardsPreview.innerHTML = "";
       const grouped = {};
       engineers.forEach(e => grouped[e.id] = []);
@@ -617,7 +672,7 @@
         engineerCardsPreview.appendChild(card);
       });
 
-      // Render Unassigned Card
+      // Render Unassigned Card if any
       const unassignedItems = grouped['unassigned'] || [];
       if (unassignedItems.length > 0) {
         const unassignedCard = document.createElement('div');
@@ -625,12 +680,12 @@
         unassignedCard.innerHTML = `
           <div>
             <div class="bg-amber-600 text-white p-3 flex justify-between items-center">
-              <h3 class="font-bold text-xs truncate"><i class="fa-solid fa-triangle-exclamation"></i> Unassigned Areas (Review Tab)</h3>
+              <h3 class="font-bold text-xs truncate"><i class="fa-solid fa-triangle-exclamation"></i> Unassigned Areas (Review)</h3>
               <span class="bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">${unassignedItems.length} Jobs</span>
             </div>
             <div class="p-3">
               <p class="text-[10px] font-semibold text-amber-700 uppercase mb-1">Status</p>
-              <p class="text-xs text-amber-900">Exported to separate sheet for manual review.</p>
+              <p class="text-xs text-amber-900">Will export as a separate review sheet.</p>
             </div>
           </div>
           <div class="p-3 bg-white border-t flex justify-between items-center">
@@ -643,14 +698,16 @@
     }
 
     window.openEngineerModal = function(engId) {
+      if (!modalTableBody || !modalEngineerTitle || !modalEngineerSubtitle || !sheetDetailModal) return;
       modalTableBody.innerHTML = "";
+
       if (engId === 'unassigned') {
         const items = rawData.map((item, idx) => {
           const res = findBestMatchingEngineer(item);
           return { raw: item, rowNum: idx + 1, isMatched: !res.eng };
         }).filter(p => p.isMatched);
 
-        modalEngineerTitle.textContent = `Sheet Tab: Unassigned Areas`;
+        modalEngineerTitle.textContent = `Sheet Tab: Unassigned Review`;
         modalEngineerSubtitle.textContent = `Total Entries: ${items.length}`;
 
         items.forEach((item, i) => {
@@ -719,10 +776,8 @@
         });
 
         if (matchedRawItems.length > 0) {
-          // Keep all original upload columns intact, adding SL at the beginning or maintaining exact structure
           const rows = matchedRawItems.map((item, idx) => {
             const copy = { ...item };
-            // Ensure SL is updated if present or insert SL
             copy["SL."] = idx + 1;
             return copy;
           });
